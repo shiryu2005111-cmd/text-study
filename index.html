@@ -683,6 +683,7 @@ async function lookup(rawWord){
   try{
     const res = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(word));
     if(!res.ok){
+      if(await showWiktionary(word)) return;
       showPanel(word, "", '<div class="def">No definition found. It may be slang, a name, or a shortened form — ask Claude about it!</div>');
       return;
     }
@@ -694,8 +695,42 @@ async function lookup(rawWord){
     saveDict();
     showPanel(word, phon, html);
   }catch(e){
+    if(await showWiktionary(word)) return;
     showPanel(word, "", '<div class="def">Couldn\'t reach the dictionary — check your internet connection. (Cached words still work offline.)</div>');
   }
+}
+
+// ---- fallback dictionary: Wiktionary REST ----
+async function wiktionaryLookup(word){
+  try{
+    const res = await fetch("https://en.wiktionary.org/api/rest_v1/page/definition/" + encodeURIComponent(word));
+    if(!res.ok) return null;
+    const data = await res.json();
+    const en = data && data.en;
+    if(!en || !en.length) return null;
+    let html = ""; let n = 0;
+    for(const block of en){
+      if(n >= 3) break;
+      const defs = (block.definitions || []).slice(0,3);
+      if(!defs.length) continue;
+      html += '<div class="pos">' + esc(block.partOfSpeech || "") + '</div>';
+      for(const d of defs){
+        const plain = String(d.definition || "").replace(/<[^>]*>/g, "").trim();
+        if(plain) html += '<div class="def">' + esc(plain) + '</div>';
+      }
+      n++;
+    }
+    if(!html) return null;
+    return html + '<div class="pex" style="margin-top:8px;opacity:.7">source: Wiktionary</div>';
+  }catch(e){ return null; }
+}
+async function showWiktionary(word){
+  const wk = await wiktionaryLookup(word);
+  if(!wk) return false;
+  dictCache[word] = {phon:"", html:wk};
+  saveDict();
+  showPanel(word, "", wk);
+  return true;
 }
 
 // ---- marker pen: drag to highlight, and look up the enclosed words together ----
