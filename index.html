@@ -906,9 +906,7 @@ function submitSentenceForm(){
   askAI(target, ref || target, "sentence", "manual");
 }
 let panelTranslateSrc = "";
-const TRANSLATE_PROMPT = "Translate the following English into natural Japanese. Reply with the Japanese translation only - no notes, no romaji, no quotation marks.
-
-";
+const TRANSLATE_PROMPT = "Translate the following English into natural Japanese. Reply with the Japanese translation only - no notes, no romaji, no quotation marks." + String.fromCharCode(10,10);
 function openGoogleTranslate(text){
   const q = (text || "").trim();
   if(!q) return;
@@ -958,8 +956,7 @@ async function translateInPanel(text){
     }
     if(!res.ok) throw new Error("http " + res.status);
     const data = await res.json();
-    const translated = (data.content || []).filter(b=>b.type==="text").map(b=>b.text).join("
-").trim();
+    const translated = (data.content || []).filter(b=>b.type==="text").map(b=>b.text).join(String.fromCharCode(10)).trim();
     if(!translated) throw new Error("empty");
     const html = '<div class="def" style="white-space:pre-wrap">' + esc(translated) + '</div>';
     aiCache[cacheKey] = html; saveAiCache();
