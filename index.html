@@ -77,6 +77,24 @@
     #panel .closep{font-size:26px;top:6px;right:12px;padding:6px 10px;}
     textarea,input,select{font-size:16px;}
   }
+
+  #tapbar{display:none;}
+  @media (max-width: 640px){
+    #tapbar{
+      display:flex;gap:6px;position:fixed;left:0;right:0;bottom:0;z-index:60;
+      background:#0b0d11;border-top:1px solid var(--border);
+      padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+      overflow-x:auto;-webkit-overflow-scrolling:touch;
+    }
+    .tapbtn{
+      flex:1 0 auto;min-height:46px;padding:10px 12px;font-size:14px;font-weight:600;
+      background:var(--card2);border:1px solid var(--border);color:var(--text);
+      border-radius:10px;white-space:nowrap;
+    }
+    .tapbtn:active{background:var(--accent);color:#0f1115;}
+    #panel{bottom:64px;max-height:52vh;}
+    body{padding-bottom:64px;}
+  }
 </style>
 </head>
 <body>
@@ -1036,6 +1054,45 @@ document.addEventListener("keydown", (e)=>{
   askAI(target.text, target.line, mode, target.src);
 });
 
+// ---- tap actions (mobile: same as Shift+T / Shift+W / Shift+S) ----
+function tapTarget(){
+  const sel = window.getSelection();
+  if(sel && !sel.isCollapsed && sel.rangeCount){
+    const t = targetFromRange(sel.getRangeAt(0));
+    if(t) return t;
+  }
+  return lastSelectionTarget || pendingAI || null;
+}
+function tapNeedTarget(){
+  showPanel("Nothing selected", "", '<div class="def">Tap a word, or select a phrase first, then press this button.</div>');
+}
+function tapTranslate(){
+  const t = tapTarget();
+  if(!t){ tapNeedTarget(); return; }
+  pendingAI = null;
+  translateInPanel(t.text);
+}
+function tapMeaning(){
+  const t = tapTarget();
+  if(!t){ tapNeedTarget(); return; }
+  pendingAI = null;
+  if(!aiKey){ route(t.text, t.line); return; }
+  askAI(t.text, t.line, "meaning", t.src);
+}
+function tapSentence(){
+  const t = tapTarget();
+  rememberLiveSelection();
+  showSentenceForm(t || lastSelectionTarget || pendingAI);
+}
+function tapMarker(){
+  markerTapState = !markerTapState;
+  if(markerTapState){ setMarkerEnabled(true); } else { setMarkerEnabled(false); }
+  const b = document.getElementById("tapMarkerBtn");
+  if(b) b.textContent = markerTapState ? "Marker ON" : "Marker";
+}
+let markerTapState = false;
+function tapErase(){ setEraserEnabled(true); }
+
 // ---- AI lookup (Claude API, called directly from this page) ----
 const AIKEY_STORE = "anthropicApiKey";
 let aiKey = localStorage.getItem(AIKEY_STORE) || "";
@@ -1265,5 +1322,6 @@ function speak(text, rate){
 // init
 render();
 </script>
+<div id="tapbar"><button class="tapbtn" onclick="tapTranslate()">Translate</button><button class="tapbtn" onclick="tapMeaning()">Meaning</button><button class="tapbtn" onclick="tapSentence()">Sentence</button><button class="tapbtn" id="tapMarkerBtn" onclick="tapMarker()">Marker</button><button class="tapbtn" onclick="tapErase()">Erase</button></div>
 </body>
 </html>
