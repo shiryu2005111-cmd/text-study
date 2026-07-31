@@ -1,0 +1,1215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Study — Paste & Learn</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --card2:#1e222b; --text:#eef0f3; --muted:#9399a8;
+    --accent:#f6a5c0; --accent2:#f6b93b; --border:#2a2f3a; --good:#5cd85c;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);padding-bottom:220px;}
+  header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  header h1{font-size:18px;margin:0;font-weight:600;}
+  header .sub{font-size:12px;color:var(--muted);margin-top:4px;}
+  .btn{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:9px 16px;border-radius:8px;font-size:13px;cursor:pointer;}
+  .btn.primary{background:var(--accent);color:#0f1115;border-color:var(--accent);font-weight:600;}
+  .btn.danger{color:#e05263;border-color:#e05263;}
+  main{max-width:780px;margin:0 auto;padding:24px;}
+  .howto{background:#241a20;border-left:3px solid var(--accent);padding:12px 16px;border-radius:6px;font-size:13px;color:#f0d5df;margin-bottom:22px;line-height:1.7;}
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+  .tab{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;}
+  .tab.active{background:var(--accent);color:#0f1115;font-weight:600;border-color:var(--accent);}
+  .folder-row{width:100%;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+  .folder-chip{background:transparent;border:1px dashed var(--border);color:var(--muted);padding:5px 12px;border-radius:14px;font-size:12px;cursor:pointer;}
+  .folder-chip.active{color:var(--accent);border-color:var(--accent);border-style:solid;font-weight:600;}
+  /* editor */
+  #editor{display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px;}
+  #editor input{width:100%;background:#0b0d11;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;margin-bottom:10px;}
+  #editor select{width:100%;background:#0b0d11;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;margin-bottom:10px;}
+  #editor textarea{width:100%;background:#0b0d11;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:12px;font-size:14px;line-height:1.8;min-height:260px;font-family:inherit;resize:vertical;}
+  #editor .hint{font-size:12px;color:var(--muted);margin:8px 0 12px 0;line-height:1.6;}
+  /* lyrics view */
+  #view{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;display:none;}
+  #view h2{font-size:16px;color:var(--accent);margin:0 0 4px 0;}
+  #view .view-actions{margin:10px 0 18px 0;display:flex;gap:8px;flex-wrap:wrap;}
+  .lyrics{font-size:16px;line-height:2.1;}
+  .lyrics .line{min-height:1em;}
+  .w{cursor:pointer;border-radius:3px;}
+  .w:hover{background:#2a3140;}
+  mark.my-highlight{background:#ffe066;color:#111;padding:0 1px;border-radius:2px;cursor:pointer;}
+  .marker-toggle{background:var(--card);border:1px solid var(--border);color:var(--accent2);padding:9px 16px;border-radius:20px;font-size:13px;cursor:pointer;}
+  .marker-toggle.off{color:var(--muted);border-color:var(--muted);}
+  /* dictionary panel */
+  #panel{position:fixed;left:0;right:0;bottom:0;background:#0b0d11;border-top:2px solid var(--accent);padding:16px 24px 20px;display:none;max-height:45vh;overflow-y:auto;z-index:50;}
+  #panel .pw{font-size:20px;font-weight:700;color:var(--accent);}
+  #panel .phon{color:var(--muted);font-size:13px;margin-left:8px;}
+  #panel .pos{color:var(--accent2);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:10px;}
+  #panel .def{font-size:14px;line-height:1.7;margin-top:2px;}
+  #panel .pex{font-size:13px;font-style:italic;color:var(--muted);margin-top:2px;}
+  #panel .closep{position:absolute;top:10px;right:16px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;}
+  #panel .panel-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-right:34px;}
+  #panel .pron-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 8px;}
+  #panel .speak{background:none;border:1px solid var(--border);color:var(--accent);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;}
+  #panel .speak:disabled{opacity:.4;cursor:not-allowed;}
+  #panel .sentence-form{display:grid;gap:10px;margin-top:8px;}
+  #panel .sentence-form label{font-size:12px;color:var(--muted);font-weight:600;}
+  #panel .sentence-form textarea{width:100%;min-height:82px;background:#11151d;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:9px;font:13px/1.5 inherit;resize:vertical;box-sizing:border-box;}
+  .empty-note{color:var(--muted);font-size:14px;text-align:center;padding:60px 20px;line-height:2;}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:30px;line-height:1.8;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📚 Text Study — Paste & Learn</h1>
+    <div class="sub">Paste any text — lyrics, articles, scripts → tap a word for the dictionary, or select any part to study it.</div>
+  </div>
+  <div>
+    <button class="marker-toggle" id="aiToggle">🤖 AI: OFF</button>
+    <button class="marker-toggle" id="markerToggle">🖍️ Marker: ON</button>
+    <button class="btn" id="exportBtn" title="Save all your texts to a file, to move to another device">⬇️ Export</button>
+    <button class="btn" id="importBtn" title="Load texts from a file exported on another device">⬆️ Import</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none;">
+    <button class="btn primary" id="addBtn">＋ Add a text</button>
+  </div>
+</header>
+
+<main>
+  <div class="howto">
+    <b>How it works:</b> Copy any text yourself — song lyrics (e.g. from Spotify's lyrics view), news articles, textbook passages, scripts — and paste it here. It's your own private copy, saved <b>only in this browser</b> (localStorage; nothing is uploaded except the part you look up).
+    <b>Tap a word or select a phrase</b> = the free dictionary shows instantly (¥0). If that's not enough, press <b>Shift+W</b> to ask the AI for the meaning in context, <b>Shift+S</b> to paste reference + target text for Claude sentence help, or <b>Shift+T</b> for Japanese translation in the panel (¥0).
+    <b>Select across multiple lines</b> = press <b>Shift+W</b> for AI meaning, <b>Shift+S</b> for the paste form, or <b>Shift+T</b> for Japanese translation.
+    <b>Marker shortcuts:</b> press <b>1</b> for Marker ON, <b>2</b> for Marker OFF. OFF still searches selected text, but does not add yellow marks.
+    In the dictionary panel, use <b>Pronounce</b> / <b>Slow</b> for sound, tap unknown words or select phrases inside the explanation, then press <b>Back</b> to return.
+    You can also drag the marker over text <b>inside the result panel</b> to highlight it in yellow.
+    Highlights reset when you reload — the act of marking is the point.
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div id="editor">
+    <input id="titleInput" placeholder="Title (e.g. number one girl / eHotelier article 7-6)">
+    <select id="folderSelect"></select>
+    <div class="hint">Paste the text below. Keep the line breaks — the page shows them line by line. New folders are created later with the 📁 Folder button.</div>
+    <textarea id="lyricsInput" placeholder="Paste the text here..."></textarea>
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      <button class="btn primary" id="saveBtn">Save</button>
+      <button class="btn" id="cancelBtn">Cancel</button>
+    </div>
+  </div>
+
+  <div id="view">
+    <h2 id="viewTitle"></h2>
+    <div class="view-actions">
+      <button class="btn" id="folderBtn">📁 Folder</button>
+      <button class="btn" id="editBtn">✏️ Edit</button>
+      <button class="btn danger" id="deleteBtn">🗑 Delete</button>
+    </div>
+    <div class="lyrics" id="lyricsArea"></div>
+  </div>
+
+  <div class="empty-note" id="emptyNote">
+    Nothing saved yet.<br>Press <b>＋ Add a text</b>, paste lyrics, an article, or any passage, and start studying.
+  </div>
+</main>
+
+<div id="panel">
+  <button class="closep" id="closePanel">✕</button>
+  <div class="panel-top">
+    <button class="speak" id="pBack" disabled>← Back</button>
+    <span class="pw" id="pWord"></span><span class="phon" id="pPhon"></span>
+  </div>
+  <div class="pron-row">
+    <button class="speak" id="pSpeak">🔊 Pronounce</button>
+    <button class="speak" id="pSlow">🐢 Slow</button>
+  </div>
+  <div id="pBody"></div>
+</div>
+
+<footer>Your pasted texts live only in this browser on this PC. Clearing browser data deletes them.<br>Word definitions: dictionaryapi.dev (free English dictionary).</footer>
+
+<script>
+// ---- curated idiom glossary (same content as the rosie phrase cards) ----
+const GLOSSARY = [
+  {p:"number one", m:"The best; the most important. 'Someone's number one' = the person they care about most.", ex:"You'll always be my number one."},
+  {p:"the one", m:"THE special person — the person someone is meant to be with.", ex:"Everyone kept telling her he wasn't the one."},
+  {p:"crave", m:"To want something so strongly it almost hurts.", ex:"After a long shift, I always crave ramen."},
+  {p:"validation", m:"Confirmation from others that you're good enough.", ex:"He posts constantly because he's seeking validation."},
+  {p:"mean the world to", m:"To be extremely important to someone.", ex:"Your support means the world to me."},
+  {p:"reassurance", m:"Words that make an anxious person feel safe again.", ex:"She just needed a little reassurance."},
+  {p:"cross my mind", m:"When a thought appears briefly without you trying.", ex:"It crossed my mind that I might have left the oven on."},
+  {p:"keep me up", m:"To prevent someone from sleeping.", ex:"The noise from next door kept me up all night."},
+  {p:"toss and turn", m:"To keep changing position in bed because you can't sleep.", ex:"I was tossing and turning until sunrise."},
+  {p:"on my mind", m:"Something you keep thinking about.", ex:"I've got a lot on my mind today."},
+  {p:"get over", m:"To emotionally recover after a breakup or setback.", ex:"It took him a year to get over his ex."},
+  {p:"move on", m:"To leave the past behind and continue your life.", ex:"She's finally moved on and seems happy."},
+  {p:"waste my time / waste your time", m:"To take someone's time and give nothing real back.", ex:"If you're not serious, don't waste my time."},
+  {p:"look back", m:"To think about the past.", ex:"Looking back, we were never right for each other."},
+  {p:"what we had", m:"Set phrase: 'our relationship / the special thing between us.'", ex:"I don't regret what we had."},
+  {p:"toxic", m:"(person/relationship) Emotionally harmful — manipulative, draining.", ex:"She finally cut off her toxic friend."},
+  {p:"till the end / until the end", m:"All the way to the finish — often loyalty, sometimes ironic.", ex:"We stayed stubborn till the end."},
+  {p:"red flag", m:"A warning sign about a person, usually in dating.", ex:"He was rude to the waiter — huge red flag."},
+  {p:"on and off", m:"(relationship) Repeatedly breaking up and getting back together.", ex:"They were on and off for three years."},
+  {p:"bring out the worst in", m:"To cause someone's worst behavior to appear.", ex:"They brought out the worst in each other."},
+  {p:"drag it out", m:"To make something last longer than it should.", ex:"We knew it was over — we just dragged it out."},
+  {p:"grab a drink / grab a coffee", m:"The most natural casual invite in English.", ex:"Want to grab a coffee after class?"},
+  {p:"catch up", m:"To meet and share what's happened since last time.", ex:"Let's catch up next week."},
+  {p:"hit me up / hit you up", m:"(slang) To contact someone casually.", ex:"Hit me up when you're free."},
+  {p:"keep it casual", m:"To avoid making a relationship serious or defined.", ex:"They're keeping it casual."},
+  {p:"read into", m:"To find hidden meaning that may not be there.", ex:"Don't read too much into it."},
+  {p:"take it slow", m:"To let a relationship develop gradually.", ex:"She wants to take it slow this time."},
+  {p:"apateu", m:"Korean for 'apartment' (아파트) + a hand-stacking drinking game played at parties.", ex:"She taught everyone the apateu game."},
+  {p:"take a shot", m:"To drink a small glass of strong alcohol in one go; figuratively, to try.", ex:"Everyone took a shot when the song came on."},
+  {p:"stay the night", m:"To sleep over at someone's place.", ex:"It was pouring, so she told him to stay the night."},
+  {p:"blow my mind / blow your mind", m:"To amaze someone completely.", ex:"The rooftop view blew my mind."},
+  {p:"turn it up", m:"To raise the volume / the energy.", ex:"It's Friday night — turn it up!"},
+  {p:"player", m:"A person who dates/flirts with many people insincerely.", ex:"Everyone says he's a player."},
+  {p:"play games", m:"To manipulate someone's feelings instead of being honest.", ex:"I'm too old to play games."},
+  {p:"lead me on / lead you on / lead someone on", m:"To make someone believe you're interested when you're not.", ex:"She felt led on when he stopped replying."},
+  {p:"see through", m:"To recognize someone's true intentions despite their act.", ex:"I can see right through him."},
+  {p:"game over", m:"The moment it's finished — relationships and situations too.", ex:"Once trust is broken, it's game over."},
+  {p:"mixed signals", m:"Contradictory romantic behavior that confuses the other person.", ex:"Sweet one day, cold the next — mixed signals."},
+  {p:"stay a little longer", m:"The classic gentle request not to leave yet.", ex:"Everyone wanted to stay a little longer."},
+  {p:"make it last", m:"To try to extend something good.", ex:"Last day of the trip — let's make it last."},
+  {p:"hold on to", m:"To keep something/someone and not let go.", ex:"Hold on to the people who show up for you."},
+  {p:"the night is young", m:"A fun way to say it's too early to go home.", ex:"Don't leave — the night is still young!"},
+  {p:"before you go", m:"Set phrase for a last request before someone leaves.", ex:"Before you go, can I get a photo?"},
+  {p:"linger", m:"To stay longer than necessary because you don't want to leave.", ex:"We lingered at the cafe for hours."},
+  {p:"not the same", m:"Standard phrase for 'something is missing now.'", ex:"The team's not the same without her."},
+  {p:"used to", m:"For things that were true before but aren't now.", ex:"We used to talk every day."},
+  {p:"feel off / feels off", m:"To feel slightly wrong in a way that's hard to explain.", ex:"Today just feels off."},
+  {p:"something's missing", m:"When a situation is incomplete.", ex:"It's good, but something's missing."},
+  {p:"go through the motions", m:"To do routines mechanically, without emotion.", ex:"He was just going through the motions at work."},
+  {p:"remind me of / reminds me of", m:"To trigger a memory of someone/something.", ex:"This song reminds me of Tokyo."},
+  {p:"call it a day / call it a night", m:"To decide to stop for today.", ex:"Six hours of study — let's call it a day."},
+  {p:"call it the end", m:"Twist on the idiom above: to officially declare a relationship over.", ex:"Neither of us wanted to call it the end."},
+  {p:"closure", m:"The feeling of emotional completion after something ends.", ex:"She met him one last time to get closure."},
+  {p:"walk away", m:"To leave a situation permanently, by choice.", ex:"Sometimes the strongest move is to walk away."},
+  {p:"for good", m:"Permanently, forever.", ex:"He left the company for good."},
+  {p:"on good terms", m:"Without hostility (after an ending).", ex:"We broke up, but on good terms."},
+  {p:"all night long / all night", m:"The whole night without stopping.", ex:"We talked all night long."},
+  {p:"let loose", m:"To finally relax and stop controlling yourself.", ex:"Exams are over — time to let loose."},
+  {p:"lose track of time", m:"To not notice time passing because you're absorbed.", ex:"I was gaming and lost track of time."},
+  {p:"on the dance floor", m:"The set phrase for where the dancing happens.", ex:"She owns the dance floor."},
+  {p:"dance it off / walk it off", m:"To get rid of a bad feeling through movement.", ex:"Bad day? Dance it off."},
+  {p:"carefree", m:"Free of worries.", ex:"That summer was completely carefree."},
+  {p:"too bad", m:"Pity or regret; alone it can sound cold or sarcastic.", ex:"Too bad the weather ruined the plan."},
+  {p:"what a shame", m:"A softer, warmer way to express regret.", ex:"What a shame you couldn't come."},
+  {p:"meant to be", m:"Destined to happen. 'We weren't meant to be' = classic breakup line.", ex:"If it's meant to be, it'll find a way."},
+  {p:"right person, wrong time", m:"Set phrase for a relationship doomed by timing.", ex:"They were the right people at the wrong time."},
+  {p:"if only", m:"A wish that something had been different — regret grammar.", ex:"If only I had studied English earlier."},
+  {p:"it is what it is", m:"Resigned acceptance of something you can't change. Very common in speech.", ex:"We lost the booking. It is what it is."}
+];
+
+// build match variants (strip parentheses, split on "/")
+const VARIANTS = [];
+GLOSSARY.forEach((g,gi)=>{
+  g.p.replace(/\([^)]*\)/g,"").split("/").forEach(v=>{
+    v = v.trim();
+    if(v.length >= 3) VARIANTS.push({v:v.toLowerCase(), gi});
+  });
+});
+VARIANTS.sort((a,b)=>b.v.length - a.v.length);
+
+// ---- storage ----
+const KEY = "lyricsStudy_v1";
+const DKEY = "lyricsDictCache_v1";
+let store = JSON.parse(localStorage.getItem(KEY) || '{"songs":[]}');
+let dictCache = JSON.parse(localStorage.getItem(DKEY) || "{}");
+let currentId = store.songs.length ? store.songs[0].id : null;
+let editingId = null;
+
+function saveStore(){ localStorage.setItem(KEY, JSON.stringify(store)); }
+function saveDict(){ try{ localStorage.setItem(DKEY, JSON.stringify(dictCache)); }catch(e){} }
+
+// ---- rendering ----
+function esc(s){ return s.replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function escRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+// Folders are paths separated by "/" — e.g. "Music/rosie" is folder "rosie" inside "Music".
+// currentFolder: "" = Home (top level), "All" = flat view of everything, or a path.
+let currentFolder = "";
+
+function allFolderPaths(){
+  // every folder path, including implied parents ("Music/rosie" implies "Music")
+  const set = new Set();
+  store.songs.forEach(s=>{
+    if(!s.folder) return;
+    const parts = s.folder.split("/");
+    for(let i=1;i<=parts.length;i++) set.add(parts.slice(0,i).join("/"));
+  });
+  return [...set].sort();
+}
+function childFolders(path){
+  const kids = new Set();
+  allFolderPaths().forEach(p=>{
+    if(path===""){
+      kids.add(p.split("/")[0]);
+    } else if(p.startsWith(path + "/")){
+      kids.add(p.slice(path.length+1).split("/")[0]);
+    }
+  });
+  return [...kids].sort();
+}
+function textsAt(path){
+  if(path==="All") return store.songs;
+  if(path==="") return store.songs.filter(s=>!s.folder);
+  return store.songs.filter(s=>s.folder===path);
+}
+function fixCurrent(){
+  const visible = textsAt(currentFolder);
+  if(!visible.find(s=>s.id===currentId)) currentId = visible.length ? visible[0].id : null;
+}
+function chip(label, active, onclick){
+  const b = document.createElement("button");
+  b.className = "folder-chip" + (active ? " active" : "");
+  b.textContent = label;
+  b.onclick = onclick;
+  return b;
+}
+
+function renderTabs(){
+  const tabs = document.getElementById("tabs");
+  tabs.innerHTML = "";
+  const anyFolders = allFolderPaths().length > 0;
+  if(anyFolders){
+    if(currentFolder!=="" && currentFolder!=="All" && !allFolderPaths().includes(currentFolder)) currentFolder = "";
+    const row = document.createElement("div");
+    row.className = "folder-row";
+    row.appendChild(chip("🏠 Home", currentFolder==="", ()=>{ currentFolder=""; fixCurrent(); hideEditor(); render(); }));
+    row.appendChild(chip("📄 All", currentFolder==="All", ()=>{ currentFolder="All"; fixCurrent(); hideEditor(); render(); }));
+    if(currentFolder!=="" && currentFolder!=="All"){
+      row.appendChild(chip("⬅ Up", false, ()=>{
+        const i = currentFolder.lastIndexOf("/");
+        currentFolder = i===-1 ? "" : currentFolder.slice(0, i);
+        fixCurrent(); hideEditor(); render();
+      }));
+      row.appendChild(chip("📂 " + currentFolder, true, ()=>{}));
+    }
+    // subfolders of the current location
+    if(currentFolder!=="All"){
+      childFolders(currentFolder).forEach(k=>{
+        row.appendChild(chip("📁 " + k, false, ()=>{
+          currentFolder = currentFolder==="" ? k : currentFolder + "/" + k;
+          fixCurrent(); hideEditor(); render();
+        }));
+      });
+    }
+    // rename / move / merge / dissolve the folder we're inside (subtree moves with it)
+    if(currentFolder!=="" && currentFolder!=="All"){
+      row.appendChild(chip("✏️ Rename", false, ()=>{
+        const nf = prompt(
+          'Rename folder "' + currentFolder + '"\n' +
+          'Everything inside (texts and subfolders) moves with it.\n' +
+          'Use / to nest — e.g. "Music/rosie" puts it inside "Music".\n' +
+          'Using an existing folder\'s path merges the two.\n' +
+          'Leave empty to dissolve this folder (its whole subtree becomes unfiled).',
+          currentFolder
+        );
+        if(nf === null) return;
+        const name = nf.trim().replace(/^\/+|\/+$/g, "");
+        store.songs.forEach(s=>{
+          if(!s.folder) return;
+          if(s.folder === currentFolder || s.folder.startsWith(currentFolder + "/")){
+            if(name) s.folder = name + s.folder.slice(currentFolder.length);
+            else delete s.folder;
+          }
+        });
+        currentFolder = name || "";
+        saveStore();
+        fixCurrent();
+        render();
+      }));
+    }
+    tabs.appendChild(row);
+  }
+  textsAt(currentFolder).forEach(s=>{
+    const t = document.createElement("button");
+    t.className = "tab" + (s.id===currentId ? " active" : "");
+    t.textContent = s.title + (currentFolder==="All" && s.folder ? "  ·" + s.folder : "");
+    t.onclick = ()=>{ currentId = s.id; hideEditor(); render(); };
+    tabs.appendChild(t);
+  });
+}
+
+function renderLine(line){
+  // plain lyrics: every word clickable, no automatic coloring
+  // words are split out BEFORE escaping, so escaping "&"/'"' into &amp;/&quot; never
+  // gets its letters (amp/quot) re-matched and torn apart by the word-wrap regex
+  return line.split(/([A-Za-z][A-Za-z'’-]*)/g).map((chunk,i)=>
+    i % 2 === 1 ? '<span class="w">'+esc(chunk)+'</span>' : esc(chunk)
+  ).join('');
+}
+
+function render(){
+  renderTabs();
+  const view = document.getElementById("view");
+  const empty = document.getElementById("emptyNote");
+  const song = store.songs.find(s=>s.id===currentId);
+  if(!song){ view.style.display="none"; empty.style.display="block"; return; }
+  empty.style.display = "none";
+  view.style.display = "block";
+  document.getElementById("viewTitle").textContent = song.title;
+  const area = document.getElementById("lyricsArea");
+  area.innerHTML = song.text.split(/\r?\n/).map(l=>'<div class="line">'+(l.trim() ? renderLine(l) : "&nbsp;")+'</div>').join("");
+  // word click: the free dictionary shows immediately (¥0); the word also becomes
+  // the pending target, so Shift+W / Shift+S can ask the AI when the dictionary isn't enough
+  area.querySelectorAll(".w").forEach(el=>{
+    el.onclick = ()=>{
+      const sel = window.getSelection();
+      if(sel && !sel.isCollapsed) return; // a drag-selection is being handled by selection lookup
+      const word = el.textContent;
+      const line = lineTextOf(el);
+      if(sentencePickMode){
+        runSentenceTarget({text: word, line, src: "lyrics"});
+        return;
+      }
+      setPendingAI(word, line, true); // quiet: dictionary panel is about to show
+      route(word, line);
+    };
+  });
+}
+
+function lineTextOf(node){
+  const el = node.nodeType === 3 ? node.parentElement : node;
+  const line = el && el.closest ? el.closest(".line") : null;
+  return line ? line.textContent.trim() : "";
+}
+
+// free fallback chain (used when AI is OFF)
+function route(text, line){
+  const t = text.replace(/\s+/g," ").trim();
+  if(!t) return;
+  if(t.includes(" ")) lookupPhrase(t);
+  else lookup(t);
+}
+
+// ---- editor ----
+function showEditor(song){
+  editingId = song ? song.id : null;
+  document.getElementById("titleInput").value = song ? song.title : "";
+  document.getElementById("lyricsInput").value = song ? song.text : "";
+  // folder picker: existing folders only (new folders are made later via the 📁 button)
+  const sel = document.getElementById("folderSelect");
+  sel.innerHTML = "";
+  const optNone = document.createElement("option");
+  optNone.value = "";
+  optNone.textContent = "📄 No folder (Home)";
+  sel.appendChild(optNone);
+  allFolderPaths().forEach(p=>{
+    const o = document.createElement("option");
+    o.value = p;
+    o.textContent = "📁 " + p;
+    sel.appendChild(o);
+  });
+  sel.value = song ? (song.folder || "") :
+    (currentFolder!=="" && currentFolder!=="All" ? currentFolder : "");
+  document.getElementById("editor").style.display = "block";
+  document.getElementById("view").style.display = "none";
+  document.getElementById("emptyNote").style.display = "none";
+  document.getElementById("titleInput").focus();
+}
+function hideEditor(){ document.getElementById("editor").style.display = "none"; }
+
+document.getElementById("folderBtn").onclick = ()=>{
+  const song = store.songs.find(s=>s.id===currentId);
+  if(!song) return;
+  const fl = allFolderPaths();
+  const f = prompt(
+    "Folder for \"" + song.title + "\"\n" +
+    "Use / to nest folders — e.g. \"Music/rosie\" = folder \"rosie\" inside \"Music\".\n" +
+    (fl.length ? "Existing: " + fl.join(", ") + "\n" : "") +
+    "Leave empty to remove it from its folder.",
+    song.folder || (currentFolder!=="All" ? currentFolder : "")
+  );
+  if(f === null) return;
+  const name = f.trim().replace(/^\/+|\/+$/g, "");
+  if(name) song.folder = name;
+  else delete song.folder;
+  saveStore();
+  fixCurrent();
+  render();
+};
+
+document.getElementById("addBtn").onclick = ()=>showEditor(null);
+
+// ---- export / import (move data between devices/browsers) ----
+document.getElementById("exportBtn").onclick = ()=>{
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    store: JSON.parse(localStorage.getItem(KEY) || '{"songs":[]}'),
+    dictCache: JSON.parse(localStorage.getItem(DKEY) || "{}"),
+    aiCache: JSON.parse(localStorage.getItem("aiLookupCache_v6") || "{}")
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = payload.exportedAt.slice(0,10);
+  a.href = url;
+  a.download = `text_study_export_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById("importBtn").onclick = ()=>{
+  document.getElementById("importFile").click();
+};
+document.getElementById("importFile").onchange = (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      if(!data.store || !Array.isArray(data.store.songs)) throw new Error("not a valid export file");
+      const existingIds = new Set(store.songs.map(s=>s.id));
+      let added = 0, skipped = 0;
+      for(const song of data.store.songs){
+        if(existingIds.has(song.id)){ skipped++; continue; }
+        store.songs.push(song);
+        added++;
+      }
+      if(data.store.folders){
+        store.folders = store.folders || [];
+        const existingFolderPaths = new Set(store.folders.map(f=>f.path));
+        for(const folder of data.store.folders){
+          if(!existingFolderPaths.has(folder.path)) store.folders.push(folder);
+        }
+      }
+      saveStore();
+      if(data.dictCache){
+        dictCache = Object.assign({}, data.dictCache, dictCache);
+        saveDict();
+      }
+      if(data.aiCache){
+        const existingAi = JSON.parse(localStorage.getItem("aiLookupCache_v6") || "{}");
+        localStorage.setItem("aiLookupCache_v6", JSON.stringify(Object.assign({}, data.aiCache, existingAi)));
+      }
+      fixCurrent();
+      render();
+      alert(`Import done: ${added} text(s) added, ${skipped} already existed and were skipped.`);
+    }catch(err){
+      alert("Import failed: this doesn't look like a valid export file.\n" + err.message);
+    }
+    document.getElementById("importFile").value = "";
+  };
+  reader.readAsText(file);
+};
+document.getElementById("editBtn").onclick = ()=>{
+  const song = store.songs.find(s=>s.id===currentId);
+  if(song) showEditor(song);
+};
+document.getElementById("cancelBtn").onclick = ()=>{ hideEditor(); render(); };
+document.getElementById("saveBtn").onclick = ()=>{
+  const title = document.getElementById("titleInput").value.trim();
+  const text = document.getElementById("lyricsInput").value.trim();
+  if(!title || !text){ alert("Both the title and the text are needed."); return; }
+  const folder = document.getElementById("folderSelect").value;
+  if(editingId){
+    const song = store.songs.find(s=>s.id===editingId);
+    song.title = title; song.text = text;
+    if(folder) song.folder = folder; else delete song.folder;
+    currentId = editingId;
+  } else {
+    const id = Date.now().toString(36);
+    const song = {id, title, text};
+    if(folder) song.folder = folder;
+    store.songs.push(song);
+    currentId = id;
+  }
+  // jump to where the text was saved so it's visible right away
+  if(currentFolder !== "All") currentFolder = folder || "";
+  saveStore(); hideEditor(); render();
+};
+document.getElementById("deleteBtn").onclick = ()=>{
+  const song = store.songs.find(s=>s.id===currentId);
+  if(!song) return;
+  if(!confirm('Delete "' + song.title + '"?')) return;
+  store.songs = store.songs.filter(s=>s.id!==currentId);
+  currentId = store.songs.length ? store.songs[0].id : null;
+  saveStore(); render();
+};
+
+// ---- dictionary panel ----
+let panelWord = "";
+let currentPanelState = null;
+let panelHistory = [];
+function updateBackBtn(){
+  const b = document.getElementById("pBack");
+  if(!b) return;
+  b.disabled = panelHistory.length === 0;
+}
+function showPanel(word, phon, bodyHtml, opts){
+  opts = opts || {};
+  if(currentPanelState && !opts.replace && currentPanelState.word !== word){
+    panelHistory.push(currentPanelState);
+    if(panelHistory.length > 20) panelHistory.shift();
+  }
+  panelWord = word;
+  document.getElementById("pWord").textContent = word;
+  document.getElementById("pPhon").textContent = phon || "";
+  // when a target is pending and AI is on, remind that Shift+W / Shift+S asks Claude; Shift+T uses free translation
+  if(!opts.noAiHint && typeof aiKey !== "undefined" && aiKey && typeof pendingAI !== "undefined" && pendingAI){
+    bodyHtml += '<div class="pex" style="margin-top:10px;">Not enough? <b>Shift+W</b> = meaning / <b>Shift+S</b> = paste-form sentence help ≈¥0.2 / <b>Shift+T</b> = Japanese ¥0</div>';
+  }
+  currentPanelState = {word, phon: phon || "", bodyHtml};
+  document.getElementById("pBody").innerHTML = bodyHtml;
+  document.getElementById("panel").style.display = "block";
+  updateBackBtn();
+  if(!opts.noWordify) wordifyPanel();
+}
+
+// make every word in the result panel tappable (free dictionary; Shift+W/S upgrades to AI, Shift+T translates)
+function wordifyPanel(){
+  const body = document.getElementById("pBody");
+  const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, null);
+  const nodes = [];
+  while(walker.nextNode()){
+    const n = walker.currentNode;
+    const p = n.parentElement;
+    if(!p) continue;
+    if(p.closest("button")) continue;          // keep buttons clickable as buttons
+    if(p.classList.contains("w")) continue;    // already wrapped
+    if(/[A-Za-z]/.test(n.nodeValue)) nodes.push(n);
+  }
+  nodes.forEach(n=>{
+    const frag = document.createDocumentFragment();
+    n.nodeValue.split(/([A-Za-z][A-Za-z'’-]*)/).forEach(part=>{
+      if(!part) return;
+      if(/^[A-Za-z]/.test(part)){
+        const sp = document.createElement("span");
+        sp.className = "w";
+        sp.textContent = part;
+        sp.onclick = ()=>{
+          const sel = window.getSelection();
+          if(sel && !sel.isCollapsed) return; // drag in the panel = highlight, not lookup
+          const blk = sp.closest(".def,.pex,.meaning");
+          const ctx = ((blk ? blk.textContent : part) || part).trim().slice(0, 300);
+          if(sentencePickMode){
+            runSentenceTarget({text: part, line: ctx, src: "panel"});
+            return;
+          }
+          setPendingAI(part, ctx, true, "panel");
+          route(part, ctx);
+        };
+        frag.appendChild(sp);
+      } else {
+        frag.appendChild(document.createTextNode(part));
+      }
+    });
+    n.parentNode.replaceChild(frag, n);
+  });
+}
+document.getElementById("closePanel").onclick = ()=>{ document.getElementById("panel").style.display = "none"; };
+document.getElementById("pBack").onclick = ()=>{
+  const prev = panelHistory.pop();
+  if(!prev) return;
+  showPanel(prev.word, prev.phon, prev.bodyHtml, {replace:true});
+};
+document.getElementById("pSpeak").onclick = ()=>{ if(panelWord) speak(panelWord); };
+document.getElementById("pSlow").onclick = ()=>{ if(panelWord) speak(panelWord, 0.72); };
+
+function entryToHtml(entry){
+  let html = "";
+  (entry.meanings || []).slice(0,3).forEach(mn=>{
+    html += '<div class="pos">' + esc(mn.partOfSpeech || "") + '</div>';
+    (mn.definitions || []).slice(0,2).forEach(d=>{
+      html += '<div class="def">• ' + esc(d.definition || "") + '</div>';
+      if(d.example) html += '<div class="pex">"' + esc(d.example) + '"</div>';
+    });
+  });
+  return html || '<div class="def">No definition details found.</div>';
+}
+
+async function lookup(rawWord){
+  let word = rawWord.toLowerCase().replace(/[’]/g,"'").replace(/^'+|'+$/g,"");
+  if(word.endsWith("'s")) word = word.slice(0,-2);
+  if(!word) return;
+  // curated glossary first (single-word entries like toxic, apateu, closure)
+  const ghit = VARIANTS.find(({v}) => v === word);
+  if(ghit){
+    const g = GLOSSARY[ghit.gi];
+    showPanel(word, "", '<div class="pos">from the idiom notes</div><div class="def">• ' + esc(g.m) + '</div><div class="pex">"' + esc(g.ex) + '"</div>');
+    return;
+  }
+  if(dictCache[word]){
+    const c = dictCache[word];
+    showPanel(word, c.phon, c.html);
+    return;
+  }
+  showPanel(word, "", '<div class="def">Looking it up...</div>');
+  try{
+    const res = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(word));
+    if(!res.ok){
+      showPanel(word, "", '<div class="def">No definition found. It may be slang, a name, or a shortened form — ask Claude about it!</div>');
+      return;
+    }
+    const data = await res.json();
+    const entry = data[0];
+    const phon = entry.phonetic || (entry.phonetics || []).map(p=>p.text).find(t=>t) || "";
+    const html = entryToHtml(entry);
+    dictCache[word] = {phon, html};
+    saveDict();
+    showPanel(word, phon, html);
+  }catch(e){
+    showPanel(word, "", '<div class="def">Couldn\'t reach the dictionary — check your internet connection. (Cached words still work offline.)</div>');
+  }
+}
+
+// ---- marker pen: drag to highlight, and look up the enclosed words together ----
+let markerEnabled = false;
+let eraserEnabled = false;
+function updateMarkerButton(){
+  const b = document.getElementById("markerToggle");
+  if(eraserEnabled){
+    b.textContent = "🧹 Eraser: ON (3)";
+  } else {
+    b.textContent = markerEnabled ? "🖍️ Marker: ON (1)" : "🖍️ Marker: OFF (2)";
+  }
+  b.classList.toggle("off", !markerEnabled && !eraserEnabled);
+}
+function setMarkerEnabled(enabled){
+  markerEnabled = enabled;
+  if(enabled) eraserEnabled = false;
+  updateMarkerButton();
+}
+function setEraserEnabled(enabled){
+  eraserEnabled = enabled;
+  if(enabled) markerEnabled = false;
+  updateMarkerButton();
+}
+document.getElementById("markerToggle").onclick = function(){
+  if(eraserEnabled) setMarkerEnabled(false);
+  else setMarkerEnabled(!markerEnabled);
+};
+updateMarkerButton();
+
+// erase highlights: unwraps any <mark class="my-highlight"> that the given range touches
+function eraseMarksInRange(range){
+  const candidates = document.querySelectorAll("#lyricsArea mark.my-highlight, #panel mark.my-highlight");
+  let erased = false;
+  candidates.forEach(mark=>{
+    if(range.intersectsNode(mark)){
+      const parent = mark.parentNode;
+      if(!parent) return;
+      while(mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+      parent.removeChild(mark);
+      parent.normalize();
+      erased = true;
+    }
+  });
+  return erased;
+}
+
+function linesSpanned(range){
+  // all .line elements the selection touches, joined as multi-line context
+  const area = document.getElementById("lyricsArea");
+  const lines = [];
+  area.querySelectorAll(".line").forEach(el=>{
+    if(range.intersectsNode(el)){
+      const t = el.textContent.trim();
+      if(t) lines.push(t);
+    }
+  });
+  return lines;
+}
+
+function wrapMark(range){
+  const mark = document.createElement("mark");
+  mark.className = "my-highlight";
+  try {
+    range.surroundContents(mark);
+  } catch(e) {
+    const frag = range.extractContents();
+    mark.appendChild(frag);
+    range.insertNode(mark);
+  }
+}
+
+function selectedTextFromRange(range){
+  const spanned = linesSpanned(range);
+  if(spanned.length > 1) return spanned.join("\n");
+  return range.toString().replace(/\s+/g," ").trim();
+}
+
+let pendingAI = null;
+let lastSelectionTarget = null;
+let selectionTimer = null;
+let sentencePickMode = false;
+function setSentencePickMode(enabled){
+  sentencePickMode = enabled;
+}
+function sentenceFormIsOpen(){
+  return !!document.querySelector("#panel .sentence-form");
+}
+function runSentenceTarget(target){
+  if(!target) return;
+  setSentencePickMode(false);
+  pendingAI = null;
+  if(!aiKey){
+    showPanel(target.text, "", '<div class="def">Sentence analysis needs AI. Tap the 🤖 button and enter your Anthropic API key first.</div>');
+    return;
+  }
+  askAI(target.text, target.line, "sentence", target.src);
+}
+function targetFromRange(range){
+  if(!range) return null;
+  if(sentenceFormIsOpen()) return null;
+  const area = document.getElementById("lyricsArea");
+  const panel = document.getElementById("panel");
+  const inLyrics = area && area.contains(range.commonAncestorContainer);
+  const inPanel = panel && panel.contains(range.commonAncestorContainer);
+  if(!inLyrics && !inPanel) return null;
+  const text = selectedTextFromRange(range);
+  if(!text) return null;
+  if(inPanel){
+    const parent = range.startContainer.parentElement;
+    const blk = parent && parent.closest ? parent.closest(".def,.pex,.meaning,#pBody") : null;
+    const context = ((blk ? blk.textContent : text) || text).trim().slice(0, 500);
+    return {text, line: context, src: "panel"};
+  }
+  const spanned = linesSpanned(range);
+  const context = spanned.length ? spanned.join("\n") : lineTextOf(range.startContainer);
+  return {text, line: context, src: "lyrics"};
+}
+function rememberLiveSelection(){
+  if(sentenceFormIsOpen()) return;
+  const sel = window.getSelection();
+  if(!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+  const target = targetFromRange(sel.getRangeAt(0));
+  if(target){
+    lastSelectionTarget = target;
+    pendingAI = target;
+  }
+}
+document.addEventListener("selectionchange", ()=>{
+  clearTimeout(selectionTimer);
+  selectionTimer = setTimeout(rememberLiveSelection, 80);
+});
+
+function handleMarker(){
+  if(sentenceFormIsOpen()) return;
+  const sel = window.getSelection();
+  if(!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+  const range = sel.getRangeAt(0);
+  const area = document.getElementById("lyricsArea");
+  const panel = document.getElementById("panel");
+  const inLyrics = area && area.contains(range.commonAncestorContainer);
+  const inPanel = panel && panel.contains(range.commonAncestorContainer);
+  if(!inLyrics && !inPanel) return;
+  if(eraserEnabled){
+    eraseMarksInRange(range);
+    sel.removeAllRanges();
+    return;
+  }
+  const text = selectedTextFromRange(range);
+  if(!text) return;
+  const selectedTarget = targetFromRange(range);
+  if(selectedTarget){
+    lastSelectionTarget = selectedTarget;
+    pendingAI = selectedTarget;
+  }
+  if(sentencePickMode){
+    sel.removeAllRanges();
+    runSentenceTarget(selectedTarget);
+    return;
+  }
+  if(inPanel){
+    if(markerEnabled){
+      // marker ON inside the result panel: mark only, no lookup
+      wrapMark(range);
+      sel.removeAllRanges();
+      return;
+    }
+    setPendingAI(selectedTarget.text, selectedTarget.line, true, "panel");
+    route(selectedTarget.text, selectedTarget.line);
+    return;
+  }
+  const spanned = linesSpanned(range);
+  const singleLine = spanned.length <= 1;
+  if(markerEnabled && singleLine){
+    wrapMark(range); // multi-line selections skip the highlight (wrapping across lines breaks the layout)
+  }
+  if(markerEnabled) sel.removeAllRanges();
+  if(singleLine){
+    // word or phrase within one line: free dictionary shows immediately;
+    // Shift+W / Shift+S upgrades to the AI; Shift+T translates
+    setPendingAI(selectedTarget.text, selectedTarget.line, true);
+    route(selectedTarget.text, selectedTarget.line);
+  } else {
+    // multi-line: dictionary can't help — AI via Shift+W / Shift+S, or translation via Shift+T
+    setPendingAI(selectedTarget.text, selectedTarget.line, !aiKey);
+    if(!aiKey) route(selectedTarget.text, selectedTarget.line);
+  }
+}
+document.addEventListener("mouseup", handleMarker);
+document.addEventListener("touchend", handleMarker);
+
+// ---- Shift+W / Shift+S / Shift+T: run the selected (or last-marked) part through AI or Translate ----
+function setPendingAI(text, line, quiet, src){
+  pendingAI = {text, line, src: src || "lyrics"};
+  lastSelectionTarget = pendingAI; // keep in sync so a word click always beats an older drag-selection
+  if(quiet) return;
+  showPanel(text, "", '<div class="def">Selected. <b>Shift+W</b> = meaning / <b>Shift+S</b> = paste-form sentence help / <b>Shift+T</b> = Japanese translation. Selecting something else replaces this.</div>');
+}
+function showSentenceForm(prefill){
+  prefill = prefill || lastSelectionTarget || pendingAI || {};
+  const ref = prefill.line || "";
+  const target = prefill.text || "";
+  showPanel("Sentence help", "", 
+    '<div class="sentence-form">' +
+      '<label for="sentenceRef">Reference range</label>' +
+      '<textarea id="sentenceRef" placeholder="Paste the wider line, verse, or surrounding text here.">' + esc(ref) + '</textarea>' +
+      '<label for="sentenceTarget">Part you want to ask about</label>' +
+      '<textarea id="sentenceTarget" placeholder="Paste the exact word, phrase, or sentence you want explained here.">' + esc(target) + '</textarea>' +
+      '<button class="speak" onclick="submitSentenceForm()">Ask Claude</button>' +
+      '<div class="pex">Shift+S always opens this form. Paste/edit both boxes, then ask Claude.</div>' +
+    '</div>',
+    {noWordify:true, noAiHint:true});
+  setTimeout(()=>document.getElementById("sentenceTarget")?.focus(), 0);
+}
+function submitSentenceForm(){
+  const ref = (document.getElementById("sentenceRef")?.value || "").trim();
+  const target = (document.getElementById("sentenceTarget")?.value || "").trim();
+  if(!target){
+    showPanel("Sentence help", "", '<div class="def">Paste the exact part you want to ask about first.</div>');
+    return;
+  }
+  if(!aiKey){
+    showPanel("Sentence help", "", '<div class="def">Sentence help needs Claude. Tap the 🤖 button and enter your Anthropic API key first.</div>');
+    return;
+  }
+  askAI(target, ref || target, "sentence", "manual");
+}
+function openGoogleTranslate(text){
+  const q = (text || "").trim();
+  if(!q) return;
+  const url = "https://translate.google.com/?sl=en&tl=ja&op=translate&text=" + encodeURIComponent(q);
+  window.open(url, "_blank", "noopener");
+}
+async function translateInPanel(text){
+  const q = (text || "").trim();
+  if(!q) return;
+  showPanel(q + "  (日本語訳)", "", '<div class="def">Translating...</div>');
+  try{
+    const res = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=" + encodeURIComponent(q));
+    if(!res.ok) throw new Error("translate failed");
+    const data = await res.json();
+    const translated = data && data[0]
+      ? data[0].map(part => part && part[0] ? part[0] : "").join("").trim()
+      : "";
+    if(!translated) throw new Error("empty translation");
+    showPanel(q + "  (日本語訳)", "", '<div class="def" style="white-space:pre-wrap">' + esc(translated) + '</div>', {replace:true});
+  }catch(e){
+    showPanel(q + "  (日本語訳)", "",
+      '<div class="def">Translation failed here. You can open it manually if needed.</div>' +
+      '<button class="speak" style="margin-top:10px" onclick="openGoogleTranslate(panelWord.replace(/  \\(日本語訳\\)$/,&quot;&quot;))">Open Google Translate</button>',
+      {replace:true});
+  }
+}
+document.addEventListener("keydown", (e)=>{
+  const tag = document.activeElement ? document.activeElement.tagName : "";
+  if(tag !== "TEXTAREA" && tag !== "INPUT" && !e.shiftKey){
+    if(e.key === "1"){
+      e.preventDefault();
+      setMarkerEnabled(true);
+      return;
+    }
+    if(e.key === "2"){
+      e.preventDefault();
+      setMarkerEnabled(false);
+      return;
+    }
+    if(e.key === "3"){
+      e.preventDefault();
+      setEraserEnabled(true);
+      return;
+    }
+  }
+  if(!e.shiftKey) return;
+  const k = e.key.toLowerCase();
+  if(k !== "w" && k !== "s" && k !== "g" && k !== "t") return;
+  if(tag === "TEXTAREA" || tag === "INPUT") return; // don't hijack typing in text fields
+  if(k === "s"){
+    e.preventDefault();
+    rememberLiveSelection();
+    showSentenceForm(lastSelectionTarget || pendingAI);
+    return;
+  }
+  // prefer the live selection (e.g. marker OFF); otherwise the last marked part
+  let target = null;
+  let liveTarget = null;
+  const sel = window.getSelection();
+  if(sel && !sel.isCollapsed && sel.rangeCount){
+    liveTarget = targetFromRange(sel.getRangeAt(0));
+    target = liveTarget;
+  }
+  if(k === "g" && !liveTarget){
+    e.preventDefault();
+    setSentencePickMode(true);
+    showPanel("Sentence mode", "", '<div class="def">Sentence mode is ON. Click one word or select a phrase/line to analyze it.</div>');
+    return;
+  }
+  if(!target) target = lastSelectionTarget || pendingAI;
+  if(!target){
+    return;
+  }
+  e.preventDefault();
+  pendingAI = null;
+  if(k === "t"){
+    translateInPanel(target.text);
+    return;
+  }
+  if(k === "g"){
+    runSentenceTarget(target);
+    return;
+  }
+  const mode = "meaning";
+  if(!aiKey){
+    if(mode === "sentence"){
+      showPanel(target.text, "", '<div class="def">This needs AI. Tap the 🤖 button and enter your Anthropic API key first.</div>');
+      return;
+    }
+    route(target.text, target.line);
+    return;
+  }
+  askAI(target.text, target.line, mode, target.src);
+});
+
+// ---- AI lookup (Claude API, called directly from this page) ----
+const AIKEY_STORE = "anthropicApiKey";
+let aiKey = localStorage.getItem(AIKEY_STORE) || "";
+let aiCache = JSON.parse(localStorage.getItem("aiLookupCache_v6") || "{}");
+function saveAiCache(){ try{ localStorage.setItem("aiLookupCache_v6", JSON.stringify(aiCache)); }catch(e){} }
+
+// delete the currently shown saved answer, then allow an immediate re-ask
+let lastCacheKey = null;
+let lastCacheTarget = null;
+function deleteCachedAnswer(){
+  if(!lastCacheKey) return;
+  delete aiCache[lastCacheKey];
+  saveAiCache();
+  lastCacheKey = null;
+  if(lastCacheTarget){
+    pendingAI = lastCacheTarget; // so Shift+W / Shift+S re-asks right away
+    lastSelectionTarget = lastCacheTarget;
+    lastCacheTarget = null;
+  }
+  document.getElementById("pBody").innerHTML =
+    '<div class="def">Deleted. Press <b>Shift+W</b> (meaning) or <b>Shift+S</b> (sentence) to ask again (≈¥0.2). <b>Shift+T</b> shows Japanese translation.</div>';
+}
+function updateAiBtn(){
+  const b = document.getElementById("aiToggle");
+  b.textContent = aiKey ? "🤖 AI: ON" : "🤖 AI: OFF (tap to set up)";
+  b.classList.toggle("off", !aiKey);
+}
+document.getElementById("aiToggle").onclick = ()=>{
+  const k = prompt(
+    "Paste your Anthropic API key (starts with sk-ant-).\n" +
+    "Get one at console.anthropic.com → API keys.\n\n" +
+    "The key is stored only in this browser on this PC.\n" +
+    "Leave the box empty and press OK to turn AI lookup OFF.",
+    aiKey
+  );
+  if(k === null) return;
+  aiKey = k.trim();
+  if(aiKey) localStorage.setItem(AIKEY_STORE, aiKey);
+  else localStorage.removeItem(AIKEY_STORE);
+  updateAiBtn();
+};
+
+function buildPrompt(selection, line, mode, src){
+  if(src === "manual" && mode === "sentence"){
+    return 'Reference text:\n"' + line + '"\n\n' +
+      'Target part:\n"' + selection + '"\n\n' +
+      'Explain the target part using the reference text only as context. Break it into useful grammar/expression chunks for an English learner. Do not summarize the whole reference text. Do not give a full-sentence translation or loose paraphrase.\n\n' +
+      'Definition of useful chunk: the smallest useful meaning/grammar unit. It can be one word, a phrasal verb, an idiom, a fixed expression, lyric-style shortening, or a short sentence pattern. Do not split a unit if splitting would hide how the expression works. Do not use a whole clause or whole line when a smaller useful chunk exists.\n\n' +
+      'Use this exact format only:\n\n' +
+      'PARTS:\n' +
+      '- chunk = its meaning / how it is used in this sentence / if it is a set phrase or idiom, its definition\n\n' +
+      'Use 4-8 short bullets. Keep each bullet concise. Prioritize useful chunks, not every word. Do not add any section after PARTS.';
+  }
+  if(src === "panel"){
+    // the selection came from an explanation text, not from lyrics
+    if(mode === "sentence"){
+      return 'In this text:\n"' + line + '"\n\n' +
+        'Break down "' + selection + '" into micro grammar/expression chunks for an English learner. Focus only on the selected sentence or phrase. Do not summarize the whole text, emotions, themes, or repeated structure. Do not give a full-sentence translation or loose paraphrase.\n\n' +
+        'Definition of micro chunk: the smallest useful meaning/grammar unit. It can be one word, a phrasal verb, an idiom, a fixed expression, or a short sentence pattern. Do not split a unit if splitting would hide how the expression works. Do not use a whole clause or whole lyric line when a smaller useful chunk exists.\n\n' +
+        'Use this exact format only:\n\n' +
+        'PARTS:\n' +
+        '- chunk = its meaning / how it is used in this sentence / if it is a set phrase or idiom, its definition\n\n' +
+        'Use 4-8 short bullets. Keep each bullet under 18 words. Prioritize useful chunks, not every word. Break out phrasal verbs, prepositions, omitted relative words, objects, tense, and unusual word order as separate chunks when relevant. Do not combine multiple lines or clauses into one broad bullet. Do not add any section after PARTS.\n\n' +
+        'Good style example:\n' +
+        '- run to = to go to someone for help or comfort / here: the action toward the person being described / set phrase: phrasal verb "run to someone"\n' +
+        '- [that/who] = omitted relative word / connects "the one" to "I run to"';
+    }
+    if(selection.includes(" ")){
+      return 'In this text:\n"' + line + '"\n\n' +
+        'For the phrase "' + selection + '", answer in this exact format:\n' +
+        'DEFINITION: its general definition as a set expression (if it is one; otherwise say it is a free combination)\n' +
+        'MEANING: what it means in this text\n' +
+        'USAGE: how it is used here (function, e.g. what it refers to)\n' +
+        'NUANCE: the nuance this expression carries\n' +
+        'Keep each line short.';
+    }
+    return 'In this text:\n"' + line + '"\n\n' +
+      'For the word "' + selection + '", answer in this exact format:\n' +
+      'MEANING: the word\'s general meaning\n' +
+      'USAGE: how it is used in this text (function, e.g. what it refers to)\n' +
+      'NUANCE: the nuance this word carries\n' +
+      'Keep each line short.';
+  }
+  const multi = line.includes("\n");
+  if(mode === "sentence"){
+    return (multi ? 'Here are consecutive lines from a text I\'m studying:\n"' : 'Here is a line from a text I\'m studying:\n"') + line + '"\n\n' +
+      'Break down "' + selection + '" into micro grammar/expression chunks for an English learner. Focus only on the selected sentence or phrase. Do not summarize the whole text, emotions, themes, or repeated structure. Do not give a full-sentence translation or loose paraphrase.\n\n' +
+      'Definition of micro chunk: the smallest useful meaning/grammar unit. It can be one word, a phrasal verb, an idiom, a fixed expression, lyric-style shortening, or a short sentence pattern. Do not split a unit if splitting would hide how the expression works. Do not use a whole clause or whole lyric line when a smaller useful chunk exists.\n\n' +
+      'Use this exact format only:\n\n' +
+      'PARTS:\n' +
+      '- chunk = its meaning / how it is used in this sentence / if it is a set phrase or idiom, its definition\n\n' +
+      'Use 4-8 short bullets. Keep each bullet under 18 words. Prioritize useful chunks, not every word. Break out phrasal verbs, prepositions, omitted relative words, objects, tense, lyric-style shortening, and unusual word order as separate chunks when relevant. Do not combine multiple lines or clauses into one broad bullet. Do not add any section after PARTS.\n\n' +
+      'Good style example:\n' +
+      '- run to = to go to someone for help or comfort / here: the action toward the person being described / set phrase: phrasal verb "run to someone"\n' +
+      '- [that/who] = omitted relative word / connects "the one" to "I run to"';
+  }
+  const intro = (multi ? 'In these consecutive lines from a text I\'m studying:\n"' : 'In this line from a text I\'m studying:\n"') + line + '"\n\n';
+  if(selection.includes(" ")){
+    return intro +
+      'For the phrase "' + selection + '", answer in this exact format:\n' +
+      'DEFINITION: its general definition as a set expression (if it is one; otherwise say it is a free combination)\n' +
+      'MEANING: what it means in this line\n' +
+      'USAGE: how it is used here (function, e.g. what it refers to)\n' +
+      'NUANCE: the nuance this expression carries, compared with plainer alternatives\n' +
+      'Keep each line short.';
+  }
+  return intro +
+    'For the word "' + selection + '", answer in this exact format:\n' +
+    'MEANING: the word\'s general meaning\n' +
+    'USAGE: how it is used in this line (function, e.g. what it refers to)\n' +
+    'NUANCE: the nuance this word carries, compared with plainer alternatives\n' +
+    'Keep each line short.';
+}
+
+async function askAI(selection, line, mode, src){
+  mode = mode || "meaning";
+  const cacheKey = mode + "|" + (src || "lyrics") + "|" + selection.toLowerCase() + "|" + line;
+  const title = selection + (mode === "sentence" ? "  (sentence)" : "");
+  if(aiCache[cacheKey]){
+    // saved answer: show it with a delete button so it can be re-asked fresh
+    lastCacheKey = cacheKey;
+    lastCacheTarget = {text: selection, line: line, src: src || "lyrics"};
+    showPanel(title, "", aiCache[cacheKey] +
+      '<div class="pex" style="margin-top:8px;">(saved answer — ¥0)</div>' +
+      '<button class="speak" style="margin-top:8px;" onclick="deleteCachedAnswer()">🗑 Delete this answer</button>');
+    return;
+  }
+  showPanel(title, "", '<div class="def">Asking Claude...</div>');
+  try{
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": aiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5",
+        max_tokens: 450,
+        messages: [{
+          role: "user",
+          content: buildPrompt(selection, line, mode, src)
+        }]
+      })
+    });
+    if(res.status === 401){
+      showPanel(selection, "", '<div class="def">API key rejected — tap the 🤖 button and re-enter it.</div>');
+      return;
+    }
+    if(!res.ok){
+      showPanel(selection, "", '<div class="def">Claude is busy (HTTP ' + res.status + ') — try again in a few seconds.</div>');
+      return;
+    }
+    const data = await res.json();
+    const text = (data.content || []).filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
+    if(!text){
+      showPanel(selection, "", '<div class="def">Empty response — try again.</div>');
+      return;
+    }
+    const html = '<div class="def" style="white-space:pre-wrap">' + esc(text) + '</div>';
+    aiCache[cacheKey] = html;
+    saveAiCache();
+    showPanel(title, "", html);
+  }catch(e){
+    showPanel(selection, "", '<div class="def">Couldn\'t reach Claude — check your internet connection.</div>');
+  }
+}
+updateAiBtn();
+
+// ---- phrase lookup: curated idioms first, then dictionary, then "ask Claude" ----
+function lookupPhrase(text){
+  const norm = text.toLowerCase().replace(/[’]/g,"'").replace(/[.,!?;:"()]/g,"").trim();
+  if(!norm) return;
+  // single word -> normal dictionary
+  if(!norm.includes(" ")){ lookup(norm); return; }
+  // curated idiom glossary
+  const hit = VARIANTS.find(({v}) => v === norm);
+  if(hit){
+    const g = GLOSSARY[hit.gi];
+    showPanel(text, "", '<div class="pos">idiom / expression</div><div class="def">• ' + esc(g.m) + '</div><div class="pex">"' + esc(g.ex) + '"</div>');
+    return;
+  }
+  // try the dictionary API with the whole phrase (works for some phrasal verbs)
+  lookupExact(norm, text);
+}
+
+async function lookupExact(query, display){
+  showPanel(display, "", '<div class="def">Looking it up...</div>');
+  try{
+    const res = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(query));
+    if(res.ok){
+      const data = await res.json();
+      const entry = data[0];
+      const phon = entry.phonetic || (entry.phonetics || []).map(p=>p.text).find(t=>t) || "";
+      showPanel(display, phon, entryToHtml(entry));
+      return;
+    }
+  }catch(e){ /* fall through to ask-Claude */ }
+  showPanel(display, "",
+    '<div class="def">No dictionary entry for this phrase — it may be an idiom, slang, or song-specific wording.</div>' +
+    '<button class="speak" style="margin-top:10px" onclick="copyForClaude()">📋 Copy question for Claude</button>');
+}
+
+function copyForClaude(){
+  const q = 'What does "' + panelWord + '" mean in the text I\'m studying? Please explain the nuance and give a couple of everyday example sentences.';
+  navigator.clipboard.writeText(q).then(()=>alert("Copied! Paste it into Claude."))
+    .catch(()=>prompt("Copy this question:", q));
+}
+
+// ---- TTS ----
+let cachedVoice = null;
+function pickVoice(){
+  const voices = speechSynthesis.getVoices();
+  cachedVoice = voices.find(v => v.lang === 'en-AU') || voices.find(v => v.lang && v.lang.startsWith('en')) || null;
+}
+if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(text, rate){
+  if(!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  if(cachedVoice) u.voice = cachedVoice;
+  u.rate = rate || 0.95;
+  speechSynthesis.speak(u);
+}
+
+// init
+render();
+</script>
+</body>
+</html>
