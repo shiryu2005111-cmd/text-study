@@ -59,6 +59,24 @@
   #panel .sentence-form textarea{width:100%;min-height:82px;background:#11151d;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:9px;font:13px/1.5 inherit;resize:vertical;box-sizing:border-box;}
   .empty-note{color:var(--muted);font-size:14px;text-align:center;padding:60px 20px;line-height:2;}
   footer{text-align:center;color:var(--muted);font-size:12px;padding:30px;line-height:1.8;}
+
+  /* ---- mobile ---- */
+  @media (max-width: 640px){
+    body{padding-bottom:56vh;-webkit-text-size-adjust:100%;}
+    header{padding:14px 16px;}
+    header h1{font-size:17px;}
+    main{padding:16px 14px;}
+    .howto{font-size:14px;padding:12px 14px;line-height:1.8;}
+    .btn{padding:13px 18px;font-size:15px;min-height:46px;}
+    .tab{padding:12px 16px;font-size:15px;min-height:44px;}
+    #panel{padding:14px 16px calc(18px + env(safe-area-inset-bottom));max-height:56vh;}
+    #panel .pw{font-size:22px;}
+    #panel .def{font-size:16px;line-height:1.8;}
+    #panel .pex{font-size:14px;}
+    #panel .phon,#panel .pos{font-size:14px;}
+    #panel .closep{font-size:26px;top:6px;right:12px;padding:6px 10px;}
+    textarea,input,select{font-size:16px;}
+  }
 </style>
 </head>
 <body>
@@ -887,6 +905,10 @@ function submitSentenceForm(){
   }
   askAI(target, ref || target, "sentence", "manual");
 }
+let panelTranslateSrc = "";
+const TRANSLATE_PROMPT = "Translate the following English into natural Japanese. Reply with the Japanese translation only - no notes, no romaji, no quotation marks.
+
+";
 function openGoogleTranslate(text){
   const q = (text || "").trim();
   if(!q) return;
@@ -896,21 +918,56 @@ function openGoogleTranslate(text){
 async function translateInPanel(text){
   const q = (text || "").trim();
   if(!q) return;
-  showPanel(q + "  (日本語訳)", "", '<div class="def">Translating...</div>');
-  try{
-    const res = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=" + encodeURIComponent(q));
-    if(!res.ok) throw new Error("translate failed");
-    const data = await res.json();
-    const translated = data && data[0]
-      ? data[0].map(part => part && part[0] ? part[0] : "").join("").trim()
-      : "";
-    if(!translated) throw new Error("empty translation");
-    showPanel(q + "  (日本語訳)", "", '<div class="def" style="white-space:pre-wrap">' + esc(translated) + '</div>', {replace:true});
-  }catch(e){
-    showPanel(q + "  (日本語訳)", "",
-      '<div class="def">Translation failed here. You can open it manually if needed.</div>' +
-      '<button class="speak" style="margin-top:10px" onclick="openGoogleTranslate(panelWord.replace(/  \\(日本語訳\\)$/,&quot;&quot;))">Open Google Translate</button>',
+  const title = q + "  (JA)";
+  const cacheKey = "tr|" + q.toLowerCase();
+  const gt = '<button class="speak" style="margin-top:10px" onclick="openGoogleTranslate(panelTranslateSrc)">Open Google Translate</button>';
+  panelTranslateSrc = q;
+  if(aiCache[cacheKey]){
+    lastCacheKey = cacheKey;
+    lastCacheTarget = {text: q, line: "", src: "translate"};
+    showPanel(title, "", aiCache[cacheKey] +
+      '<div class="pex" style="margin-top:8px;">(saved translation)</div>' +
+      '<button class="speak" style="margin-top:8px;" onclick="deleteCachedAnswer()">Delete this answer</button>');
+    return;
+  }
+  if(!aiKey){
+    showPanel(title, "",
+      '<div class="def">Translation needs your Anthropic API key. Add it with the AI button, or open Google Translate instead.</div>' + gt,
       {replace:true});
+    return;
+  }
+  showPanel(title, "", '<div class="def">Translating...</div>');
+  try{
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": aiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5",
+        max_tokens: 700,
+        messages: [{ role: "user", content: TRANSLATE_PROMPT + q }]
+      })
+    });
+    if(res.status === 401){
+      showPanel(title, "", '<div class="def">API key rejected - add it again with the AI button.</div>', {replace:true});
+      return;
+    }
+    if(!res.ok) throw new Error("http " + res.status);
+    const data = await res.json();
+    const translated = (data.content || []).filter(b=>b.type==="text").map(b=>b.text).join("
+").trim();
+    if(!translated) throw new Error("empty");
+    const html = '<div class="def" style="white-space:pre-wrap">' + esc(translated) + '</div>';
+    aiCache[cacheKey] = html; saveAiCache();
+    lastCacheKey = cacheKey;
+    lastCacheTarget = {text: q, line: "", src: "translate"};
+    showPanel(title, "", html, {replace:true});
+  }catch(e){
+    showPanel(title, "", '<div class="def">Translation failed. You can open it manually instead.</div>' + gt, {replace:true});
   }
 }
 document.addEventListener("keydown", (e)=>{
